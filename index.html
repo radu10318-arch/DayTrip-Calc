@@ -9,7 +9,7 @@
 <title>DayTrip Calculator</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#0a0a0f;--surface:#13131a;--surface2:#1c1c28;--border:#2a2a3a;--accent:#00e5a0;--accent2:#7b61ff;--danger:#ff4757;--text:#f0f0f8;--text2:#8888aa;--text3:#555570;--radius:16px;--radius-sm:10px}
+:root{--bg:#0a0a0f;--surface:#13131a;--surface2:#1c1c28;--border:#2a2a3a;--accent:#00e5a0;--accent2:#7b61ff;--danger:#ff4757;--warn:#ffc800;--text:#f0f0f8;--text2:#8888aa;--text3:#555570;--radius:16px;--radius-sm:10px}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min-height:100vh;overflow-x:hidden}
 .screen{display:none;min-height:100vh;padding-bottom:50px}.screen.active{display:block}
@@ -51,15 +51,44 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min
 .tariff-wrap .input-field{padding-left:32px}
 .calc-btn{width:calc(100% - 32px);margin:0 16px 16px;background:var(--accent);color:#0a0a0f;border:none;border-radius:var(--radius);padding:17px;font-family:'Syne',sans-serif;font-size:16px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px}
 .calc-btn:active{transform:scale(.97)}
+.calc-btn.purple{background:var(--accent2);color:#fff}
 .back-btn{width:calc(100% - 32px);margin:0 16px 16px;background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:var(--radius);padding:16px;font-family:'Syne',sans-serif;font-size:15px;font-weight:700;cursor:pointer}
 .back-btn:active{transform:scale(.97)}
 .save-btn{width:calc(100% - 32px);margin:0 16px;background:var(--accent2);color:#fff;border:none;border-radius:var(--radius);padding:16px;font-family:'Syne',sans-serif;font-size:16px;font-weight:800;cursor:pointer}
 .save-btn:active{transform:scale(.97)}
+
+/* TAB NAV */
+.tab-nav{display:flex;margin:0 16px 16px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:4px;gap:4px}
+.tab-btn{flex:1;padding:10px 6px;border:none;border-radius:12px;font-family:'Syne',sans-serif;font-size:12px;font-weight:700;cursor:pointer;background:transparent;color:var(--text2);transition:all .2s;letter-spacing:.3px}
+.tab-btn.active{background:var(--accent);color:#0a0a0f}
+.tab-btn.active.purple{background:var(--accent2);color:#fff}
+
+/* PRICE CARDS */
+.price-section-title{font-family:'Syne',sans-serif;font-size:11px;font-weight:700;letter-spacing:1.5px;color:var(--text2);text-transform:uppercase;margin:0 16px 10px}
+.price-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:0 16px 14px}
+.price-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px 14px;text-align:center}
+.price-card.min{border-color:rgba(255,71,87,.4)}
+.price-card.rec{border-color:rgba(255,200,0,.4);grid-column:1/-1}
+.price-card.ideal{border-color:rgba(0,229,160,.4);grid-column:1/-1}
+.price-badge{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px}
+.price-badge.min{color:var(--danger)}
+.price-badge.rec{color:var(--warn)}
+.price-badge.ideal{color:var(--accent)}
+.price-value{font-family:'DM Sans',sans-serif;font-size:28px;font-weight:700;line-height:1}
+.price-value.min{color:var(--danger)}
+.price-value.rec{color:var(--warn)}
+.price-value.ideal{color:var(--accent)}
+.price-sub{font-size:11px;color:var(--text2);margin-top:5px}
+.price-km{font-size:11px;color:var(--text3);margin-top:3px}
+.price-section-wrap{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);margin:0 16px 14px;padding:14px}
+.price-section-header{font-family:'Syne',sans-serif;font-size:12px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;display:flex;align-items:center;gap:6px}
+
 .loading-overlay{display:none;position:fixed;inset:0;background:rgba(10,10,15,.88);z-index:999;align-items:center;justify-content:center;flex-direction:column;gap:16px}
 .loading-overlay.active{display:flex}
 .spinner{width:48px;height:48px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 .loading-text{color:var(--text2);font-size:14px}
+
 .route-visual{margin:0 16px 14px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px;position:relative;overflow:hidden}
 .route-visual::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--accent),var(--accent2))}
 .route-stop{display:flex;align-items:flex-start;gap:12px;padding:8px 0;position:relative}
@@ -73,6 +102,7 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min
 .route-stop-type{font-size:10px;color:var(--text2);font-weight:600;text-transform:uppercase;letter-spacing:1px}
 .route-stop-name{font-size:13px;color:var(--text);margin-top:2px;line-height:1.3}
 .route-stop-km{font-size:11px;color:var(--accent);margin-top:2px;font-weight:600}
+
 .stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:0 16px 14px}
 .stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px 14px}
 .stat-card.profit-card{grid-column:1/-1;background:linear-gradient(135deg,rgba(0,229,160,.1),rgba(123,97,255,.08));border-color:rgba(0,229,160,.5)}
@@ -81,11 +111,13 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min
 .stat-value{font-family:'DM Sans',sans-serif;font-size:26px;font-weight:700;color:var(--text);margin-top:4px;line-height:1.1;letter-spacing:-.3px}
 .stat-value.green{color:var(--accent)}.stat-value.purple{color:var(--accent2)}.stat-value.red{color:var(--danger)}
 .stat-sub{font-size:11px;color:var(--text2);margin-top:4px}
+
 .profit-bar-wrap{margin:0 16px 14px}
 .profit-bar-labels{display:flex;justify-content:space-between;margin-bottom:6px}
 .profit-bar-label{font-size:11px;color:var(--text2)}
 .profit-bar-bg{height:8px;background:var(--surface2);border-radius:4px;overflow:hidden;border:1px solid var(--border)}
 .profit-bar-fill{height:100%;border-radius:4px;background:linear-gradient(90deg,var(--accent2),var(--accent));transition:width 1s cubic-bezier(.4,0,.2,1)}
+
 .section-divider{display:flex;align-items:center;gap:10px;margin:0 0 14px;color:var(--text3);font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase}
 .section-divider::before,.section-divider::after{content:'';flex:1;height:1px;background:var(--border)}
 .settings-info{margin:0 16px 14px;background:rgba(123,97,255,.08);border:1px solid rgba(123,97,255,.3);border-radius:var(--radius);padding:14px;font-size:13px;color:var(--text2);line-height:1.6}
@@ -99,34 +131,69 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min
 <div class="loading-overlay" id="loadingOverlay"><div class="spinner"></div><div class="loading-text" id="loadingText">Se calculează...</div></div>
 <div class="toast" id="toast"></div>
 
+<!-- MAIN -->
 <div class="screen active" id="mainScreen">
   <div class="header"><div class="header-title">DayTrip <span>Calc</span></div><div class="icon-btn" onclick="showScreen('settingsScreen')">⚙️</div></div>
-  <div class="card">
-    <div class="card-label">🚗 Selectează Mașina</div>
-    <div class="car-grid">
-      <div class="car-option selected" id="car-elantra" onclick="selectCar('elantra')"><div class="car-icon">🚙</div><div class="car-name">Elantra</div><div class="car-cost" id="lbl-elantra">0.35 lei/km</div><div class="car-fuel">Benzină + GPL</div></div>
-      <div class="car-option" id="car-vito" onclick="selectCar('vito')"><div class="car-icon">🚐</div><div class="car-name">Vito</div><div class="car-cost" id="lbl-vito">0.60 lei/km</div><div class="car-fuel">Diesel</div></div>
+
+  <div class="tab-nav">
+    <button class="tab-btn active" onclick="switchTab('profitability')">💰 Profitabilitate</button>
+    <button class="tab-btn purple" onclick="switchTab('pricing')">🎯 Preț Corect</button>
+  </div>
+
+  <!-- TAB 1: PROFITABILITATE -->
+  <div id="tab-profitability">
+    <div class="card">
+      <div class="card-label">🚗 Selectează Mașina</div>
+      <div class="car-grid">
+        <div class="car-option selected" id="car-elantra" onclick="selectCar('elantra')"><div class="car-icon">🚙</div><div class="car-name">Elantra</div><div class="car-cost" id="lbl-elantra">0.35 lei/km</div><div class="car-fuel">Benzină + GPL</div></div>
+        <div class="car-option" id="car-vito" onclick="selectCar('vito')"><div class="car-icon">🚐</div><div class="car-name">Vito</div><div class="car-cost" id="lbl-vito">0.60 lei/km</div><div class="car-fuel">Diesel</div></div>
+      </div>
     </div>
+    <div class="card">
+      <div class="card-label">💶 Tarif DayTrip</div>
+      <div class="input-row"><div class="input-label">Suma oferită de client</div><div class="tariff-wrap"><span class="currency">€</span><input type="number" class="input-field" id="tariff" placeholder="0" inputmode="decimal"></div></div>
+    </div>
+    <div class="card">
+      <div class="card-label">📍 Ruta</div>
+      <div class="input-row"><div class="input-label">📌 Locația ta (de unde pleci)</div><div class="location-wrap"><input type="text" class="input-field" id="myLocation" placeholder="ex: Brașov" autocomplete="off" oninput="onAC('myLocation','acMyLoc')"><div class="autocomplete-list" id="acMyLoc"></div></div></div>
+      <div class="input-row"><div class="input-label">🟢 Locul de preluare client</div><div class="location-wrap"><input type="text" class="input-field" id="pickup" placeholder="ex: Aeroportul Otopeni" autocomplete="off" oninput="onAC('pickup','acPickup')"><div class="autocomplete-list" id="acPickup"></div></div></div>
+      <div class="section-divider">Opriri Client</div>
+      <div id="stopsList"></div>
+      <button class="add-stop-btn" onclick="addStop('stopsList','stops')">＋ Adaugă oprire</button>
+    </div>
+    <div class="card">
+      <div class="card-label">🏁 Destinație Finală</div>
+      <div class="location-wrap"><input type="text" class="input-field" id="destination" placeholder="ex: Cluj-Napoca" autocomplete="off" oninput="onAC('destination','acDest')"><div class="autocomplete-list" id="acDest"></div></div>
+    </div>
+    <button class="calc-btn" onclick="calculate()">🧮 Calculează Profitabilitatea</button>
   </div>
-  <div class="card">
-    <div class="card-label">💶 Tarif DayTrip</div>
-    <div class="input-row"><div class="input-label">Suma oferită de client</div><div class="tariff-wrap"><span class="currency">€</span><input type="number" class="input-field" id="tariff" placeholder="0" inputmode="decimal"></div></div>
+
+  <!-- TAB 2: PRET CORECT -->
+  <div id="tab-pricing" style="display:none">
+    <div class="card">
+      <div class="card-label">🚗 Selectează Mașina</div>
+      <div class="car-grid">
+        <div class="car-option selected" id="pcar-elantra" onclick="selectPCar('elantra')"><div class="car-icon">🚙</div><div class="car-name">Elantra</div><div class="car-cost">2.2 lei/km</div><div class="car-fuel">Benzină + GPL</div></div>
+        <div class="car-option" id="pcar-vito" onclick="selectPCar('vito')"><div class="car-icon">🚐</div><div class="car-name">Vito</div><div class="car-cost">3.0 lei/km</div><div class="car-fuel">Diesel</div></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-label">📍 Ruta</div>
+      <div class="input-row"><div class="input-label">📌 Locația ta (de unde pleci)</div><div class="location-wrap"><input type="text" class="input-field" id="pMyLocation" placeholder="ex: Brașov" autocomplete="off" oninput="onAC('pMyLocation','acPMyLoc')"><div class="autocomplete-list" id="acPMyLoc"></div></div></div>
+      <div class="input-row"><div class="input-label">🟢 Locul de preluare client</div><div class="location-wrap"><input type="text" class="input-field" id="pPickup" placeholder="ex: Aeroportul Otopeni" autocomplete="off" oninput="onAC('pPickup','acPPickup')"><div class="autocomplete-list" id="acPPickup"></div></div></div>
+      <div class="section-divider">Opriri Client</div>
+      <div id="pStopsList"></div>
+      <button class="add-stop-btn" onclick="addStop('pStopsList','pStops')">＋ Adaugă oprire</button>
+    </div>
+    <div class="card">
+      <div class="card-label">🏁 Destinație Finală Client</div>
+      <div class="location-wrap"><input type="text" class="input-field" id="pDestination" placeholder="ex: Cluj-Napoca" autocomplete="off" oninput="onAC('pDestination','acPDest')"><div class="autocomplete-list" id="acPDest"></div></div>
+    </div>
+    <button class="calc-btn purple" onclick="calculatePrice()">🎯 Calculează Prețul Corect</button>
   </div>
-  <div class="card">
-    <div class="card-label">📍 Ruta</div>
-    <div class="input-row"><div class="input-label">📌 Locația ta (de unde pleci)</div><div class="location-wrap"><input type="text" class="input-field" id="myLocation" placeholder="ex: Brașov" autocomplete="off" oninput="onAC('myLocation','acMyLoc')"><div class="autocomplete-list" id="acMyLoc"></div></div></div>
-    <div class="input-row"><div class="input-label">🟢 Locul de preluare client</div><div class="location-wrap"><input type="text" class="input-field" id="pickup" placeholder="ex: Aeroportul Otopeni" autocomplete="off" oninput="onAC('pickup','acPickup')"><div class="autocomplete-list" id="acPickup"></div></div></div>
-    <div class="section-divider">Opriri Client</div>
-    <div id="stopsList"></div>
-    <button class="add-stop-btn" onclick="addStop()">＋ Adaugă oprire</button>
-  </div>
-  <div class="card">
-    <div class="card-label">🏁 Destinație Finală</div>
-    <div class="location-wrap"><input type="text" class="input-field" id="destination" placeholder="ex: Cluj-Napoca" autocomplete="off" oninput="onAC('destination','acDest')"><div class="autocomplete-list" id="acDest"></div></div>
-  </div>
-  <button class="calc-btn" onclick="calculate()">🧮 Calculează Profitabilitatea</button>
 </div>
 
+<!-- RESULTS PROFITABILITATE -->
 <div class="screen" id="resultsScreen">
   <div class="header"><div class="header-title">📊 <span>Rezultate</span></div><div class="icon-btn" onclick="showScreen('mainScreen')">✕</div></div>
   <div class="route-visual" id="routeVisual"></div>
@@ -135,6 +202,27 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min
   <button class="back-btn" onclick="showScreen('mainScreen')">← Calculează altă cursă</button>
 </div>
 
+<!-- RESULTS PRET CORECT -->
+<div class="screen" id="pricingResultsScreen">
+  <div class="header"><div class="header-title">🎯 <span>Preț Corect</span></div><div class="icon-btn" onclick="showScreen('mainScreen')">✕</div></div>
+  <div class="route-visual" id="pRouteVisual"></div>
+
+  <!-- Doar cursa clientului -->
+  <div class="price-section-wrap">
+    <div class="price-section-header">🚌 Doar cursa clientului <span id="pClientKmLabel" style="color:var(--accent);margin-left:auto"></span></div>
+    <div class="price-grid" id="pClientPrices"></div>
+  </div>
+
+  <!-- Cu tot cu drum -->
+  <div class="price-section-wrap">
+    <div class="price-section-header">🔄 Inclusiv drumul tău <span id="pTotalKmLabel" style="color:var(--accent2);margin-left:auto"></span></div>
+    <div class="price-grid" id="pTotalPrices"></div>
+  </div>
+
+  <button class="back-btn" onclick="showScreen('mainScreen')">← Calculează alt preț</button>
+</div>
+
+<!-- SETTINGS -->
 <div class="screen" id="settingsScreen">
   <div class="header"><div class="header-title">⚙️ <span>Setări</span></div><div class="icon-btn" onclick="showScreen('mainScreen')">✕</div></div>
   <div class="settings-info">🔑 Necesită activat în Google Cloud:<br><strong>Places API · Directions API · Geocoding API</strong></div>
@@ -157,26 +245,41 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min
 
 <script>
 const PROXY='https://green-unit-54e7.radu10318.workers.dev';
-let car='elantra',stops=[],stopCount=0,acT={},pIds={};
+const PRICE_REC={elantra:2.2,vito:3.0};
+const PRICE_IDEAL_MULT=1.2;
+let car='elantra',pCar='elantra',stops=[],pStops=[],stopCount=0,pStopCount=0,acT={},pIds={};
 
 function getS(){const s=JSON.parse(localStorage.getItem('dts')||'{}');return{key:s.key||'',ce:parseFloat(s.ce)||.35,cv:parseFloat(s.cv)||.6,er:parseFloat(s.er)||5.1}}
 function loadS(){const s=getS();document.getElementById('apiKeyInput').value=s.key;document.getElementById('costElantra').value=s.ce!==.35?s.ce:'';document.getElementById('costVito').value=s.cv!==.6?s.cv:'';document.getElementById('eurRate').value=s.er!==5.1?s.er:'';document.getElementById('lbl-elantra').textContent=s.ce+' lei/km';document.getElementById('lbl-vito').textContent=s.cv+' lei/km'}
 function saveSettings(){const s={key:document.getElementById('apiKeyInput').value.trim(),ce:parseFloat(document.getElementById('costElantra').value)||.35,cv:parseFloat(document.getElementById('costVito').value)||.6,er:parseFloat(document.getElementById('eurRate').value)||5.1};localStorage.setItem('dts',JSON.stringify(s));document.getElementById('lbl-elantra').textContent=s.ce+' lei/km';document.getElementById('lbl-vito').textContent=s.cv+' lei/km';toast('✅ Salvat!','success');setTimeout(()=>showScreen('mainScreen'),700)}
 
 async function gfetch(url){const r=await fetch(`${PROXY}?url=${encodeURIComponent(url)}`);return await r.json()}
+async function testKey(){const k=document.getElementById('apiKeyInput').value.trim();if(!k){toast('❌ Introdu cheia','error');return}toast('⏳ Se testează...','');try{const d=await gfetch(`https://maps.googleapis.com/maps/api/geocode/json?address=Brasov,Romania&key=${k}`);if(d.status==='OK')toast('✅ Cheia funcționează!','success');else toast('❌ '+(d.error_message||d.status),'error')}catch(e){toast('❌ '+e.message,'error')}}
 
-async function testKey(){
-  const k=document.getElementById('apiKeyInput').value.trim();
-  if(!k){toast('❌ Introdu cheia','error');return}
-  toast('⏳ Se testează...','');
-  try{const d=await gfetch(`https://maps.googleapis.com/maps/api/geocode/json?address=Brasov,Romania&key=${k}`);
-  if(d.status==='OK')toast('✅ Cheia funcționează!','success');
-  else toast('❌ '+(d.error_message||d.status),'error')}catch(e){toast('❌ '+e.message,'error')}
+function switchTab(tab){
+  document.getElementById('tab-profitability').style.display=tab==='profitability'?'block':'none';
+  document.getElementById('tab-pricing').style.display=tab==='pricing'?'block':'none';
+  document.querySelectorAll('.tab-btn').forEach((b,i)=>{b.classList.toggle('active',i===(tab==='profitability'?0:1))});
 }
 
-function selectCar(c){car=c;document.querySelectorAll('.car-option').forEach(e=>e.classList.remove('selected'));document.getElementById('car-'+c).classList.add('selected')}
-function addStop(){stopCount++;const sid='s'+stopCount,aid='a'+stopCount;stops.push(sid);const w=document.createElement('div');w.className='stop-item';w.id='w'+sid;w.innerHTML=`<div class="location-wrap" style="flex:1"><input type="text" class="input-field" id="${sid}" placeholder="Oprire ${stopCount}" autocomplete="off" oninput="onAC('${sid}','${aid}')"><div class="autocomplete-list" id="${aid}"></div></div><div class="remove-btn" onclick="rmStop('${sid}')">×</div>`;document.getElementById('stopsList').appendChild(w)}
-function rmStop(sid){stops=stops.filter(s=>s!==sid);const w=document.getElementById('w'+sid);if(w)w.remove();delete pIds[sid]}
+function selectCar(c){car=c;document.querySelectorAll('#tab-profitability .car-option').forEach(e=>e.classList.remove('selected'));document.getElementById('car-'+c).classList.add('selected')}
+function selectPCar(c){pCar=c;document.querySelectorAll('#tab-pricing .car-option').forEach(e=>e.classList.remove('selected'));document.getElementById('pcar-'+c).classList.add('selected')}
+
+function addStop(listId,stopsArr){
+  const isP=stopsArr==='pStops';
+  if(isP)pStopCount++;else stopCount++;
+  const n=isP?pStopCount:stopCount;
+  const sid=(isP?'ps':'s')+n,aid=(isP?'aps':'as')+n;
+  if(isP)pStops.push(sid);else stops.push(sid);
+  const w=document.createElement('div');w.className='stop-item';w.id='wrap_'+sid;
+  w.innerHTML=`<div class="location-wrap" style="flex:1"><input type="text" class="input-field" id="${sid}" placeholder="Oprire ${n}" autocomplete="off" oninput="onAC('${sid}','${aid}')"><div class="autocomplete-list" id="${aid}"></div></div><div class="remove-btn" onclick="rmStop('${sid}','${listId}','${stopsArr}')">×</div>`;
+  document.getElementById(listId).appendChild(w);
+}
+function rmStop(sid,listId,stopsArr){
+  if(stopsArr==='pStops')pStops=pStops.filter(s=>s!==sid);else stops=stops.filter(s=>s!==sid);
+  const w=document.getElementById('wrap_'+sid);if(w)w.remove();delete pIds[sid];
+}
+
 function onAC(id,lid){const v=document.getElementById(id).value.trim();delete pIds[id];clearTimeout(acT[lid]);const l=document.getElementById(lid);if(!v||v.length<2){l.style.display='none';return}acT[lid]=setTimeout(()=>fetchAC(id,lid,v),350)}
 async function fetchAC(id,lid,inp){const{key}=getS();if(!key)return;try{const d=await gfetch(`https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(inp)}&key=${key}&language=ro&components=country:ro`);const l=document.getElementById(lid);if(!l)return;l.innerHTML='';if(!d.predictions||!d.predictions.length){l.style.display='none';return}d.predictions.slice(0,5).forEach(p=>{const i=document.createElement('div');i.className='ac-item';const m=p.structured_formatting?.main_text||p.description,s=p.structured_formatting?.secondary_text||'';i.innerHTML=`<div class="ac-main">${m}</div>${s?`<div class="ac-sub">${s}</div>`:''}`;i.onclick=()=>{document.getElementById(id).value=p.description;pIds[id]=p.place_id;l.style.display='none'};l.appendChild(i)});l.style.display='block'}catch(e){console.error(e)}}
 document.addEventListener('click',e=>{document.querySelectorAll('.autocomplete-list').forEach(l=>{if(!l.parentElement?.contains(e.target))l.style.display='none'})});
@@ -208,7 +311,111 @@ async function calculate(){
   }catch(e){showLoad(false);console.error(e);toast('❌ '+(e.message||'Eroare'),'error')}
 }
 
+async function calculatePrice(){
+  const{key,ce,cv,er}=getS();
+  if(!key){toast('⚙️ Setează cheia API','error');showScreen('settingsScreen');return}
+  if(!document.getElementById('pMyLocation').value.trim()){toast('❌ Introdu locația ta','error');return}
+  if(!document.getElementById('pPickup').value.trim()){toast('❌ Introdu preluarea','error');return}
+  if(!document.getElementById('pDestination').value.trim()){toast('❌ Introdu destinația','error');return}
+  showLoad(true,'Se geocodează...');
+  try{
+    const ml=await getLL('pMyLocation',key);setLT('Se geocodează preluarea...');
+    const pl=await getLL('pPickup',key);setLT('Se geocodează destinația...');
+    const dl=await getLL('pDestination',key);
+    const sl=[];for(const sid of pStops){const v=document.getElementById(sid)?.value?.trim();if(v){setLT('Se geocodează oprirea...');sl.push(await getLL(sid,key))}}
+    setLT('Se calculează traseul...');
+    const sDrive=await directions(ml,pl,[],key); // drum dus la client
+    const sClient=await directions(pl,dl,sl,key); // cursa clientului
+    const sReturn=await directions(dl,ml,[],key); // întoarcere acasă
+
+    const clientKm=sClient.km;
+    const totalKm=sDrive.km+sClient.km+sReturn.km;
+    const fuelPerKm=pCar==='elantra'?ce:cv;
+    const recPerKm=PRICE_REC[pCar];
+    const idealPerKm=recPerKm*PRICE_IDEAL_MULT;
+
+    // Prețuri doar cursa clientului
+    const cMin=clientKm*fuelPerKm;
+    const cRec=clientKm*recPerKm;
+    const cIdeal=clientKm*idealPerKm;
+
+    // Prețuri total (include drum dus+întors)
+    const tMin=totalKm*fuelPerKm;
+    const tRec=totalKm*recPerKm;
+    const tIdeal=totalKm*idealPerKm;
+
+    showLoad(false);
+    renderPricing({
+      mlLabel:document.getElementById('pMyLocation').value.split(',')[0],
+      plLabel:document.getElementById('pPickup').value.split(',')[0],
+      dlLabel:document.getElementById('pDestination').value.split(',')[0],
+      slLabels:pStops.map(sid=>(document.getElementById(sid)?.value||'').split(',')[0]).filter(Boolean),
+      sDrive,sClient,sReturn,clientKm,totalKm,
+      cMin,cRec,cIdeal,tMin,tRec,tIdeal,er,fuelPerKm,recPerKm,idealPerKm
+    });
+  }catch(e){showLoad(false);console.error(e);toast('❌ '+(e.message||'Eroare'),'error')}
+}
+
+function eur(lei,er){return(lei/er).toFixed(0)}
 function ft(min){const h=Math.floor(min/60),m=min%60;return h>0?`${h}h ${m}m`:`${m}m`}
+
+function renderPricing(d){
+  // Route visual
+  let h=`<div class="route-stop"><div class="route-dot dot-home">🏠</div><div class="route-stop-info"><div class="route-stop-type">Locația ta</div><div class="route-stop-name">${d.mlLabel}</div><div class="route-stop-km">→ ${d.sDrive.km.toFixed(1)} km · ${ft(d.sDrive.min)}</div></div></div>`;
+  h+=`<div class="route-stop"><div class="route-dot dot-pickup">P</div><div class="route-stop-info"><div class="route-stop-type">Preluare client</div><div class="route-stop-name">${d.plLabel}</div><div class="route-stop-km">→ ${d.sClient.km.toFixed(1)} km · ${ft(d.sClient.min)}</div></div></div>`;
+  d.slLabels.forEach((s,i)=>{h+=`<div class="route-stop"><div class="route-dot dot-stop">${i+1}</div><div class="route-stop-info"><div class="route-stop-type">Oprire ${i+1}</div><div class="route-stop-name">${s}</div></div></div>`});
+  h+=`<div class="route-stop"><div class="route-dot dot-dest">🏁</div><div class="route-stop-info"><div class="route-stop-type">Destinație finală</div><div class="route-stop-name">${d.dlLabel}</div><div class="route-stop-km">↩ ${d.sReturn.km.toFixed(1)} km acasă · ${ft(d.sReturn.min)}</div></div></div>`;
+  document.getElementById('pRouteVisual').innerHTML=h;
+
+  // Km labels
+  document.getElementById('pClientKmLabel').textContent=d.clientKm.toFixed(0)+' km';
+  document.getElementById('pTotalKmLabel').textContent=d.totalKm.toFixed(0)+' km total';
+
+  // Prețuri cursa clientului
+  document.getElementById('pClientPrices').innerHTML=`
+    <div class="price-card min">
+      <div class="price-badge min">⛽ Minim</div>
+      <div class="price-value min">€${eur(d.cMin,d.er)}</div>
+      <div class="price-sub">${d.cMin.toFixed(0)} lei</div>
+      <div class="price-km">doar combustibil</div>
+    </div>
+    <div class="price-card" style="border-color:rgba(255,200,0,.4)">
+      <div class="price-badge" style="color:var(--warn)">💰 Recomandat</div>
+      <div class="price-value" style="color:var(--warn)">€${eur(d.cRec,d.er)}</div>
+      <div class="price-sub">${d.cRec.toFixed(0)} lei</div>
+      <div class="price-km">${d.recPerKm} lei/km</div>
+    </div>
+    <div class="price-card ideal" style="grid-column:1/-1">
+      <div class="price-badge ideal">⭐ Ideal</div>
+      <div class="price-value ideal" style="font-size:32px">€${eur(d.cIdeal,d.er)}</div>
+      <div class="price-sub">${d.cIdeal.toFixed(0)} lei</div>
+      <div class="price-km">${d.idealPerKm.toFixed(2)} lei/km · +20% față de recomandat</div>
+    </div>`;
+
+  // Prețuri total
+  document.getElementById('pTotalPrices').innerHTML=`
+    <div class="price-card min">
+      <div class="price-badge min">⛽ Minim</div>
+      <div class="price-value min">€${eur(d.tMin,d.er)}</div>
+      <div class="price-sub">${d.tMin.toFixed(0)} lei</div>
+      <div class="price-km">doar combustibil</div>
+    </div>
+    <div class="price-card" style="border-color:rgba(255,200,0,.4)">
+      <div class="price-badge" style="color:var(--warn)">💰 Recomandat</div>
+      <div class="price-value" style="color:var(--warn)">€${eur(d.tRec,d.er)}</div>
+      <div class="price-sub">${d.tRec.toFixed(0)} lei</div>
+      <div class="price-km">${d.recPerKm} lei/km</div>
+    </div>
+    <div class="price-card ideal" style="grid-column:1/-1">
+      <div class="price-badge ideal">⭐ Ideal</div>
+      <div class="price-value ideal" style="font-size:32px">€${eur(d.tIdeal,d.er)}</div>
+      <div class="price-sub">${d.tIdeal.toFixed(0)} lei</div>
+      <div class="price-km">${d.idealPerKm.toFixed(2)} lei/km · +20% față de recomandat</div>
+    </div>`;
+
+  showScreen('pricingResultsScreen');
+}
+
 function renderR(d){
   let h=`<div class="route-stop"><div class="route-dot dot-home">🏠</div><div class="route-stop-info"><div class="route-stop-type">Locația ta</div><div class="route-stop-name">${d.ml}</div><div class="route-stop-km">→ ${d.s1.km.toFixed(1)} km · ${ft(d.s1.min)}</div></div></div>`;
   h+=`<div class="route-stop"><div class="route-dot dot-pickup">P</div><div class="route-stop-info"><div class="route-stop-type">Preluare client</div><div class="route-stop-name">${d.pl}</div><div class="route-stop-km">→ ${d.s2.km.toFixed(1)} km · ${ft(d.s2.min)}</div></div></div>`;
