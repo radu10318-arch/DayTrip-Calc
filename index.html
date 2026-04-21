@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="DayTrip Calc">
 <title>DayTrip Calculator</title>
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&display=swap" rel="stylesheet">
 <style>
 :root{--bg:#0a0a0f;--surface:#13131a;--surface2:#1c1c28;--border:#2a2a3a;--accent:#00e5a0;--accent2:#7b61ff;--danger:#ff4757;--text:#f0f0f8;--text2:#8888aa;--text3:#555570;--radius:16px;--radius-sm:10px}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
@@ -78,7 +78,7 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min
 .stat-card.profit-card{grid-column:1/-1;background:linear-gradient(135deg,rgba(0,229,160,.1),rgba(123,97,255,.08));border-color:rgba(0,229,160,.5)}
 .stat-icon{font-size:22px;margin-bottom:6px}
 .stat-label{font-size:11px;color:var(--text2);font-weight:500;text-transform:uppercase;letter-spacing:.8px}
-.stat-value{font-family:'Syne',sans-serif;font-size:24px;font-weight:800;color:var(--text);margin-top:4px;line-height:1}
+.stat-value{font-family:'DM Sans',sans-serif;font-size:26px;font-weight:700;color:var(--text);margin-top:4px;line-height:1.1;letter-spacing:-.3px}
 .stat-value.green{color:var(--accent)}.stat-value.purple{color:var(--accent2)}.stat-value.red{color:var(--danger)}
 .stat-sub{font-size:11px;color:var(--text2);margin-top:4px}
 .profit-bar-wrap{margin:0 16px 14px}
@@ -163,77 +163,28 @@ function getS(){const s=JSON.parse(localStorage.getItem('dts')||'{}');return{key
 function loadS(){const s=getS();document.getElementById('apiKeyInput').value=s.key;document.getElementById('costElantra').value=s.ce!==.35?s.ce:'';document.getElementById('costVito').value=s.cv!==.6?s.cv:'';document.getElementById('eurRate').value=s.er!==5.1?s.er:'';document.getElementById('lbl-elantra').textContent=s.ce+' lei/km';document.getElementById('lbl-vito').textContent=s.cv+' lei/km'}
 function saveSettings(){const s={key:document.getElementById('apiKeyInput').value.trim(),ce:parseFloat(document.getElementById('costElantra').value)||.35,cv:parseFloat(document.getElementById('costVito').value)||.6,er:parseFloat(document.getElementById('eurRate').value)||5.1};localStorage.setItem('dts',JSON.stringify(s));document.getElementById('lbl-elantra').textContent=s.ce+' lei/km';document.getElementById('lbl-vito').textContent=s.cv+' lei/km';toast('✅ Salvat!','success');setTimeout(()=>showScreen('mainScreen'),700)}
 
-async function gfetch(url){
-  const r=await fetch(`${PROXY}?url=${encodeURIComponent(url)}`);
-  return await r.json();
-}
+async function gfetch(url){const r=await fetch(`${PROXY}?url=${encodeURIComponent(url)}`);return await r.json()}
 
 async function testKey(){
   const k=document.getElementById('apiKeyInput').value.trim();
   if(!k){toast('❌ Introdu cheia','error');return}
   toast('⏳ Se testează...','');
-  try{
-    const d=await gfetch(`https://maps.googleapis.com/maps/api/geocode/json?address=Brasov,Romania&key=${k}`);
-    if(d.status==='OK')toast('✅ Cheia funcționează!','success');
-    else toast('❌ '+(d.error_message||d.status),'error');
-  }catch(e){toast('❌ Eroare: '+e.message,'error')}
+  try{const d=await gfetch(`https://maps.googleapis.com/maps/api/geocode/json?address=Brasov,Romania&key=${k}`);
+  if(d.status==='OK')toast('✅ Cheia funcționează!','success');
+  else toast('❌ '+(d.error_message||d.status),'error')}catch(e){toast('❌ '+e.message,'error')}
 }
 
 function selectCar(c){car=c;document.querySelectorAll('.car-option').forEach(e=>e.classList.remove('selected'));document.getElementById('car-'+c).classList.add('selected')}
-
 function addStop(){stopCount++;const sid='s'+stopCount,aid='a'+stopCount;stops.push(sid);const w=document.createElement('div');w.className='stop-item';w.id='w'+sid;w.innerHTML=`<div class="location-wrap" style="flex:1"><input type="text" class="input-field" id="${sid}" placeholder="Oprire ${stopCount}" autocomplete="off" oninput="onAC('${sid}','${aid}')"><div class="autocomplete-list" id="${aid}"></div></div><div class="remove-btn" onclick="rmStop('${sid}')">×</div>`;document.getElementById('stopsList').appendChild(w)}
 function rmStop(sid){stops=stops.filter(s=>s!==sid);const w=document.getElementById('w'+sid);if(w)w.remove();delete pIds[sid]}
-
 function onAC(id,lid){const v=document.getElementById(id).value.trim();delete pIds[id];clearTimeout(acT[lid]);const l=document.getElementById(lid);if(!v||v.length<2){l.style.display='none';return}acT[lid]=setTimeout(()=>fetchAC(id,lid,v),350)}
-
-async function fetchAC(id,lid,inp){
-  const{key}=getS();if(!key)return;
-  try{
-    const d=await gfetch(`https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(inp)}&key=${key}&language=ro&components=country:ro`);
-    const l=document.getElementById(lid);if(!l)return;
-    l.innerHTML='';
-    if(!d.predictions||!d.predictions.length){l.style.display='none';return}
-    d.predictions.slice(0,5).forEach(p=>{
-      const i=document.createElement('div');i.className='ac-item';
-      const m=p.structured_formatting?.main_text||p.description,s=p.structured_formatting?.secondary_text||'';
-      i.innerHTML=`<div class="ac-main">${m}</div>${s?`<div class="ac-sub">${s}</div>`:''}`;
-      i.onclick=()=>{document.getElementById(id).value=p.description;pIds[id]=p.place_id;l.style.display='none'};
-      l.appendChild(i)});
-    l.style.display='block';
-  }catch(e){console.error(e)}
-}
-
+async function fetchAC(id,lid,inp){const{key}=getS();if(!key)return;try{const d=await gfetch(`https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(inp)}&key=${key}&language=ro&components=country:ro`);const l=document.getElementById(lid);if(!l)return;l.innerHTML='';if(!d.predictions||!d.predictions.length){l.style.display='none';return}d.predictions.slice(0,5).forEach(p=>{const i=document.createElement('div');i.className='ac-item';const m=p.structured_formatting?.main_text||p.description,s=p.structured_formatting?.secondary_text||'';i.innerHTML=`<div class="ac-main">${m}</div>${s?`<div class="ac-sub">${s}</div>`:''}`;i.onclick=()=>{document.getElementById(id).value=p.description;pIds[id]=p.place_id;l.style.display='none'};l.appendChild(i)});l.style.display='block'}catch(e){console.error(e)}}
 document.addEventListener('click',e=>{document.querySelectorAll('.autocomplete-list').forEach(l=>{if(!l.parentElement?.contains(e.target))l.style.display='none'})});
 
-async function geocode(address,key){
-  const d=await gfetch(`https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(address)}&key=${key}&region=ro`);
-  if(d.status==='OK'&&d.results[0])return d.results[0].geometry.location;
-  throw new Error('Nu am găsit: '+address);
-}
-
-async function geocodePid(pid,key){
-  const d=await gfetch(`https://maps.googleapis.com/maps/api/geocode/json?place_id=${pid}&key=${key}`);
-  if(d.status==='OK'&&d.results[0])return d.results[0].geometry.location;
-  return null;
-}
-
-async function getLL(inputId,key){
-  const addr=document.getElementById(inputId)?.value?.trim();
-  if(!addr)throw new Error('Câmp gol');
-  const pid=pIds[inputId];
-  if(pid){const loc=await geocodePid(pid,key);if(loc)return loc;}
-  return await geocode(addr,key);
-}
-
-async function directions(orig,dest,wps,key){
-  let wp='';
-  if(wps.length)wp='&waypoints='+wps.map(w=>w.lat+','+w.lng).join('|');
-  const d=await gfetch(`https://maps.googleapis.com/maps/api/directions/json?origin=${orig.lat},${orig.lng}&destination=${dest.lat},${dest.lng}${wp}&key=${key}&region=ro&language=ro`);
-  if(d.status!=='OK')throw new Error('Directions: '+d.status);
-  let km=0,min=0;
-  d.routes[0].legs.forEach(l=>{km+=l.distance.value/1000;min+=Math.round(l.duration.value/60)});
-  return{km,min};
-}
+async function geocode(addr,key){const d=await gfetch(`https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(addr)}&key=${key}&region=ro`);if(d.status==='OK'&&d.results[0])return d.results[0].geometry.location;throw new Error('Nu am găsit: '+addr)}
+async function geocodePid(pid,key){const d=await gfetch(`https://maps.googleapis.com/maps/api/geocode/json?place_id=${pid}&key=${key}`);if(d.status==='OK'&&d.results[0])return d.results[0].geometry.location;return null}
+async function getLL(id,key){const addr=document.getElementById(id)?.value?.trim();if(!addr)throw new Error('Câmp gol');const pid=pIds[id];if(pid){const l=await geocodePid(pid,key);if(l)return l}return await geocode(addr,key)}
+async function directions(o,d,wps,key){let wp='';if(wps.length)wp='&waypoints='+wps.map(w=>w.lat+','+w.lng).join('|');const r=await gfetch(`https://maps.googleapis.com/maps/api/directions/json?origin=${o.lat},${o.lng}&destination=${d.lat},${d.lng}${wp}&key=${key}&region=ro&language=ro`);if(r.status!=='OK')throw new Error('Directions: '+r.status);let km=0,min=0;r.routes[0].legs.forEach(l=>{km+=l.distance.value/1000;min+=Math.round(l.duration.value/60)});return{km,min}}
 
 async function calculate(){
   const{key,ce,cv,er}=getS();
@@ -245,24 +196,13 @@ async function calculate(){
   if(!document.getElementById('destination').value.trim()){toast('❌ Introdu destinația','error');return}
   showLoad(true,'Se geocodează locația ta...');
   try{
-    const ml=await getLL('myLocation',key);
-    setLT('Se geocodează preluarea...');
-    const pl=await getLL('pickup',key);
-    setLT('Se geocodează destinația...');
+    const ml=await getLL('myLocation',key);setLT('Se geocodează preluarea...');
+    const pl=await getLL('pickup',key);setLT('Se geocodează destinația...');
     const dl=await getLL('destination',key);
-    const sl=[];
-    for(const sid of stops){
-      const v=document.getElementById(sid)?.value?.trim();
-      if(v){setLT('Se geocodează oprirea...');sl.push(await getLL(sid,key));}
-    }
+    const sl=[];for(const sid of stops){const v=document.getElementById(sid)?.value?.trim();if(v){setLT('Se geocodează oprirea...');sl.push(await getLL(sid,key))}}
     setLT('Se calculează traseul...');
-    const s1=await directions(ml,pl,[],key);
-    const s2=await directions(pl,dl,sl,key);
-    const s3=await directions(dl,ml,[],key);
-    const tk=s1.km+s2.km+s3.km,tm=s1.min+s2.min+s3.min;
-    const cpk=car==='elantra'?ce:cv,fc=tk*cpk,tl=te*er,pr=tl-fc,ppk=pr/tk;
-    const pp=Math.max(0,Math.min(100,(pr/tl)*100));
-    const h=Math.floor(tm/60),m=tm%60,ts=h>0?`${h}h ${m}m`:`${m}m`;
+    const s1=await directions(ml,pl,[],key),s2=await directions(pl,dl,sl,key),s3=await directions(dl,ml,[],key);
+    const tk=s1.km+s2.km+s3.km,tm=s1.min+s2.min+s3.min,cpk=car==='elantra'?ce:cv,fc=tk*cpk,tl=te*er,pr=tl-fc,ppk=pr/tk,pp=Math.max(0,Math.min(100,(pr/tl)*100)),h=Math.floor(tm/60),m=tm%60,ts=h>0?`${h}h ${m}m`:`${m}m`;
     showLoad(false);
     renderR({ml:document.getElementById('myLocation').value.split(',')[0],pl:document.getElementById('pickup').value.split(',')[0],dl:document.getElementById('destination').value.split(',')[0],sl:stops.map(sid=>(document.getElementById(sid)?.value||'').split(',')[0]).filter(Boolean),s1,s2,s3,tk,tm,ts,fc,te,tl,pr,ppk,pp,cpk});
   }catch(e){showLoad(false);console.error(e);toast('❌ '+(e.message||'Eroare'),'error')}
@@ -276,10 +216,9 @@ function renderR(d){
   h+=`<div class="route-stop"><div class="route-dot dot-dest">🏁</div><div class="route-stop-info"><div class="route-stop-type">Destinație finală</div><div class="route-stop-name">${d.dl}</div><div class="route-stop-km">↩ ${d.s3.km.toFixed(1)} km acasă · ${ft(d.s3.min)}</div></div></div>`;
   document.getElementById('routeVisual').innerHTML=h;
   const pc=d.pr>=0?'green':'red',cn=car==='elantra'?'Elantra':'Vito';
-  document.getElementById('statsGrid').innerHTML=`<div class="stat-card"><div class="stat-icon">📏</div><div class="stat-label">Total KM</div><div class="stat-value">${d.tk.toFixed(0)}</div><div class="stat-sub">km parcurși total</div></div><div class="stat-card"><div class="stat-icon">⏱️</div><div class="stat-label">Timp Total</div><div class="stat-value purple">${d.ts}</div><div class="stat-sub">condiții optime</div></div><div class="stat-card"><div class="stat-icon">⛽</div><div class="stat-label">Cost Combustibil</div><div class="stat-value red">${d.fc.toFixed(0)}</div><div class="stat-sub">lei · ${d.cpk} lei/km · ${cn}</div></div><div class="stat-card"><div class="stat-icon">💶</div><div class="stat-label">Tarif Client</div><div class="stat-value">${d.te}</div><div class="stat-sub">€ = ${d.tl.toFixed(0)} lei</div></div><div class="stat-card profit-card"><div class="stat-icon">💰</div><div class="stat-label">Profit Net</div><div class="stat-value ${pc}" style="font-size:32px">${d.pr>=0?'+':''}${d.pr.toFixed(0)} lei</div><div class="stat-sub">${d.ppk.toFixed(2)} lei/km · ${d.pp.toFixed(0)}% din tarif</div></div>`;
+  document.getElementById('statsGrid').innerHTML=`<div class="stat-card"><div class="stat-icon">📏</div><div class="stat-label">Total KM</div><div class="stat-value">${d.tk.toFixed(0)}</div><div class="stat-sub">km parcurși total</div></div><div class="stat-card"><div class="stat-icon">⏱️</div><div class="stat-label">Timp Total</div><div class="stat-value purple">${d.ts}</div><div class="stat-sub">condiții optime</div></div><div class="stat-card"><div class="stat-icon">⛽</div><div class="stat-label">Cost Combustibil</div><div class="stat-value red">${d.fc.toFixed(0)}</div><div class="stat-sub">lei · ${d.cpk} lei/km · ${cn}</div></div><div class="stat-card"><div class="stat-icon">💶</div><div class="stat-label">Tarif Client</div><div class="stat-value">${d.te}</div><div class="stat-sub">€ = ${d.tl.toFixed(0)} lei</div></div><div class="stat-card profit-card"><div class="stat-icon">💰</div><div class="stat-label">Profit Net</div><div class="stat-value ${pc}" style="font-size:30px;font-weight:700">${d.pr>=0?'+':''}${d.pr.toFixed(0)} lei</div><div class="stat-sub">${d.ppk.toFixed(2)} lei/km · ${d.pp.toFixed(0)}% din tarif</div></div>`;
   document.getElementById('profitBarWrap').innerHTML=`<div class="profit-bar-labels"><span class="profit-bar-label">🔴 Combustibil ${d.fc.toFixed(0)} lei</span><span class="profit-bar-label">🟢 Profit ${d.pr.toFixed(0)} lei</span></div><div class="profit-bar-bg"><div class="profit-bar-fill" id="pfill" style="width:0%"></div></div>`;
-  showScreen('resultsScreen');
-  requestAnimationFrame(()=>setTimeout(()=>{const f=document.getElementById('pfill');if(f)f.style.width=d.pp.toFixed(0)+'%'},200));
+  showScreen('resultsScreen');requestAnimationFrame(()=>setTimeout(()=>{const f=document.getElementById('pfill');if(f)f.style.width=d.pp.toFixed(0)+'%'},200));
 }
 
 function showScreen(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');window.scrollTo(0,0)}
