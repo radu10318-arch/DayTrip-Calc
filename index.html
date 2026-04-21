@@ -156,19 +156,24 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min
 </div>
 
 <script>
+const PROXY='https://green-unit-54e7.radu10318.workers.dev';
 let car='elantra',stops=[],stopCount=0,acT={},pIds={};
 
 function getS(){const s=JSON.parse(localStorage.getItem('dts')||'{}');return{key:s.key||'',ce:parseFloat(s.ce)||.35,cv:parseFloat(s.cv)||.6,er:parseFloat(s.er)||5.1}}
 function loadS(){const s=getS();document.getElementById('apiKeyInput').value=s.key;document.getElementById('costElantra').value=s.ce!==.35?s.ce:'';document.getElementById('costVito').value=s.cv!==.6?s.cv:'';document.getElementById('eurRate').value=s.er!==5.1?s.er:'';document.getElementById('lbl-elantra').textContent=s.ce+' lei/km';document.getElementById('lbl-vito').textContent=s.cv+' lei/km'}
 function saveSettings(){const s={key:document.getElementById('apiKeyInput').value.trim(),ce:parseFloat(document.getElementById('costElantra').value)||.35,cv:parseFloat(document.getElementById('costVito').value)||.6,er:parseFloat(document.getElementById('eurRate').value)||5.1};localStorage.setItem('dts',JSON.stringify(s));document.getElementById('lbl-elantra').textContent=s.ce+' lei/km';document.getElementById('lbl-vito').textContent=s.cv+' lei/km';toast('✅ Salvat!','success');setTimeout(()=>showScreen('mainScreen'),700)}
 
+async function gfetch(url){
+  const r=await fetch(`${PROXY}?url=${encodeURIComponent(url)}`);
+  return await r.json();
+}
+
 async function testKey(){
   const k=document.getElementById('apiKeyInput').value.trim();
   if(!k){toast('❌ Introdu cheia','error');return}
   toast('⏳ Se testează...','');
   try{
-    const r=await fetch(`https://maps.googleapis.com/maps/api/geocode/json?address=Brasov,Romania&key=${k}`);
-    const d=await r.json();
+    const d=await gfetch(`https://maps.googleapis.com/maps/api/geocode/json?address=Brasov,Romania&key=${k}`);
     if(d.status==='OK')toast('✅ Cheia funcționează!','success');
     else toast('❌ '+(d.error_message||d.status),'error');
   }catch(e){toast('❌ Eroare: '+e.message,'error')}
@@ -184,8 +189,7 @@ function onAC(id,lid){const v=document.getElementById(id).value.trim();delete pI
 async function fetchAC(id,lid,inp){
   const{key}=getS();if(!key)return;
   try{
-    const r=await fetch(`https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(inp)}&key=${key}&language=ro&components=country:ro`);
-    const d=await r.json();
+    const d=await gfetch(`https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(inp)}&key=${key}&language=ro&components=country:ro`);
     const l=document.getElementById(lid);if(!l)return;
     l.innerHTML='';
     if(!d.predictions||!d.predictions.length){l.style.display='none';return}
@@ -202,15 +206,13 @@ async function fetchAC(id,lid,inp){
 document.addEventListener('click',e=>{document.querySelectorAll('.autocomplete-list').forEach(l=>{if(!l.parentElement?.contains(e.target))l.style.display='none'})});
 
 async function geocode(address,key){
-  const url=`https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(address)}&key=${key}&region=ro`;
-  const r=await fetch(url);const d=await r.json();
+  const d=await gfetch(`https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(address)}&key=${key}&region=ro`);
   if(d.status==='OK'&&d.results[0])return d.results[0].geometry.location;
   throw new Error('Nu am găsit: '+address);
 }
 
 async function geocodePid(pid,key){
-  const url=`https://maps.googleapis.com/maps/api/geocode/json?place_id=${pid}&key=${key}`;
-  const r=await fetch(url);const d=await r.json();
+  const d=await gfetch(`https://maps.googleapis.com/maps/api/geocode/json?place_id=${pid}&key=${key}`);
   if(d.status==='OK'&&d.results[0])return d.results[0].geometry.location;
   return null;
 }
@@ -226,8 +228,7 @@ async function getLL(inputId,key){
 async function directions(orig,dest,wps,key){
   let wp='';
   if(wps.length)wp='&waypoints='+wps.map(w=>w.lat+','+w.lng).join('|');
-  const url=`https://maps.googleapis.com/maps/api/directions/json?origin=${orig.lat},${orig.lng}&destination=${dest.lat},${dest.lng}${wp}&key=${key}&region=ro&language=ro`;
-  const r=await fetch(url);const d=await r.json();
+  const d=await gfetch(`https://maps.googleapis.com/maps/api/directions/json?origin=${orig.lat},${orig.lng}&destination=${dest.lat},${dest.lng}${wp}&key=${key}&region=ro&language=ro`);
   if(d.status!=='OK')throw new Error('Directions: '+d.status);
   let km=0,min=0;
   d.routes[0].legs.forEach(l=>{km+=l.distance.value/1000;min+=Math.round(l.duration.value/60)});
@@ -263,18 +264,11 @@ async function calculate(){
     const pp=Math.max(0,Math.min(100,(pr/tl)*100));
     const h=Math.floor(tm/60),m=tm%60,ts=h>0?`${h}h ${m}m`:`${m}m`;
     showLoad(false);
-    renderR({
-      ml:document.getElementById('myLocation').value.split(',')[0],
-      pl:document.getElementById('pickup').value.split(',')[0],
-      dl:document.getElementById('destination').value.split(',')[0],
-      sl:stops.map(sid=>(document.getElementById(sid)?.value||'').split(',')[0]).filter(Boolean),
-      s1,s2,s3,tk,tm,ts,fc,te,tl,pr,ppk,pp,cpk
-    });
+    renderR({ml:document.getElementById('myLocation').value.split(',')[0],pl:document.getElementById('pickup').value.split(',')[0],dl:document.getElementById('destination').value.split(',')[0],sl:stops.map(sid=>(document.getElementById(sid)?.value||'').split(',')[0]).filter(Boolean),s1,s2,s3,tk,tm,ts,fc,te,tl,pr,ppk,pp,cpk});
   }catch(e){showLoad(false);console.error(e);toast('❌ '+(e.message||'Eroare'),'error')}
 }
 
 function ft(min){const h=Math.floor(min/60),m=min%60;return h>0?`${h}h ${m}m`:`${m}m`}
-
 function renderR(d){
   let h=`<div class="route-stop"><div class="route-dot dot-home">🏠</div><div class="route-stop-info"><div class="route-stop-type">Locația ta</div><div class="route-stop-name">${d.ml}</div><div class="route-stop-km">→ ${d.s1.km.toFixed(1)} km · ${ft(d.s1.min)}</div></div></div>`;
   h+=`<div class="route-stop"><div class="route-dot dot-pickup">P</div><div class="route-stop-info"><div class="route-stop-type">Preluare client</div><div class="route-stop-name">${d.pl}</div><div class="route-stop-km">→ ${d.s2.km.toFixed(1)} km · ${ft(d.s2.min)}</div></div></div>`;
