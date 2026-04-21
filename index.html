@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="DayTrip Calc">
+<title>DayTrip Calculator</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#0a0a0f;--surface:#13131a;--surface2:#1c1c28;--border:#2a2a3a;--accent:#00e5a0;--accent2:#7b61ff;--danger:#ff4757;--text:#f0f0f8;--text2:#8888aa;--text3:#555570;--radius:16px;--radius-sm:10px}
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min-height:100vh;overflow-x:hidden}
+  .screen{display:none;min-height:100vh;padding-bottom:50px}.screen.active{display:block}
+  .header{padding:56px 20px 20px;display:flex;align-items:center;justify-content:space-between}
+  .header-title{font-family:'Syne',sans-serif;font-size:22px;font-weight:800;letter-spacing:-.5px}
+  .header-title span{color:var(--accent)}
+  .icon-btn{width:40px;height:40px;background:var(--surface2);border:1px solid var(--border);border-radius:12px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:18px}
+  .icon-btn:active{transform:scale(.93)}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px;margin:0 16px 14px}
+  .card-label{font-family:'Syne',sans-serif;font-size:11px;font-weight:700;letter-spacing:1.5px;color:var(--accent);text-transform:uppercase;margin-bottom:14px}
+  .input-row{margin-bottom:12px}
+  .input-label{font-size:12px;color:var(--text2);margin-bottom:6px;font-weight:500}
+  .input-field{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:13px 14px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:15px;outline:none;transition:border-color .2s;-webkit-appearance:none}
+  .input-field:focus{border-color:var(--accent)}
+  .input-field::placeholder{color:var(--text3)}
+  .location-wrap{position:relative}
+  .autocomplete-list{position:absolute;top:calc(100% + 4px);left:0;right:0;background:var(--surface2);border:1px solid var(--accent);border-radius:var(--radius-sm);z-index:100;max-height:220px;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,.6);display:none}
+  .ac-item{padding:12px 14px;border-bottom:1px solid var(--border);cursor:pointer}
+  .ac-item:last-child{border-bottom:none}
+  .ac-item:active{background:var(--border)}
+  .ac-main{color:var(--text);font-size:14px;font-weight:500}
+  .ac-sub{color:var(--text2);font-size:12px;margin-top:2px}
+  .car-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .car-option{background:var(--surface2);border:2px solid var(--border);border-radius:var(--radius-sm);padding:14px 12px;cursor:pointer;text-align:center;transition:all .2s}
+  .car-option.selected{border-color:var(--accent);background:rgba(0,229,160,.08)}
+  .car-option:active{transform:scale(.96)}
+  .car-icon{font-size:28px;margin-bottom:6px}
+  .car-name{font-family:'Syne',sans-serif;font-size:13px;font-weight:700}
+  .car-cost{font-size:11px;color:var(--text2);margin-top:3px}
+  .car-fuel{font-size:10px;color:var(--accent);margin-top:2px;font-weight:600}
+  .stop-item{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+  .stop-item .location-wrap{flex:1}
+  .remove-btn{width:34px;height:34px;min-width:34px;background:rgba(255,71,87,.1);border:1px solid rgba(255,71,87,.3);border-radius:8px;color:var(--danger);font-size:20px;display:flex;align-items:center;justify-content:center;cursor:pointer}
+  .remove-btn:active{transform:scale(.9)}
+  .add-stop-btn{width:100%;background:transparent;border:1.5px dashed var(--border);border-radius:var(--radius-sm);padding:12px;color:var(--text2);font-family:'DM Sans',sans-serif;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px}
+  .add-stop-btn:active{border-color:var(--accent);color:var(--accent)}
+  .tariff-wrap{position:relative}
+  .tariff-wrap .currency{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--accent);font-weight:700;font-size:16px;pointer-events:none}
+  .tariff-wrap .input-field{padding-left:32px}
+  .calc-btn{width:calc(100% - 32px);margin:0 16px 16px;background:var(--accent);color:#0a0a0f;border:none;border-radius:var(--radius);padding:17px;font-family:'Syne',sans-serif;font-size:16px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px}
+  .calc-btn:active{transform:scale(.97)}
+  .back-btn{width:calc(100% - 32px);margin:0 16px 16px;background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:var(--radius);padding:16px;font-family:'Syne',sans-serif;font-size:15px;font-weight:700;cursor:pointer}
+  .back-btn:active{transform:scale(.97)}
+  .save-btn{width:calc(100% - 32px);margin:0 16px;background:var(--accent2);color:#fff;border:none;border-radius:var(--radius);padding:16px;font-family:'Syne',sans-serif;font-size:16px;font-weight:800;cursor:pointer}
+  .save-btn:active{transform:scale(.97)}
+  .loading-overlay{display:none;position:fixed;inset:0;background:rgba(10,10,15,.88);z-index:999;align-items:center;justify-content:center;flex-direction:column;gap:16px}
+  .loading-overlay.active{display:flex}
+  .spinner{width:48px;height:48px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .loading-text{color:var(--text2);font-size:14px}
+  .route-visual{margin:0 16px 14px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px;position:relative;overflow:hidden}
+  .route-visual::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--accent),var(--accent2))}
+  .route-stop{display:flex;align-items:flex-start;gap:12px;padding:8px 0;position:relative}
+  .route-stop:not(:last-child)::after{content:'';position:absolute;left:11px;top:28px;width:2px;height:calc(100% - 8px);background:var(--border)}
+  .route-dot{width:24px;height:24px;min-width:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;z-index:1}
+  .dot-home{background:rgba(123,97,255,.2);border:2px solid var(--accent2);color:var(--accent2)}
+  .dot-pickup{background:rgba(0,229,160,.2);border:2px solid var(--accent);color:var(--accent)}
+  .dot-stop{background:rgba(255,200,0,.15);border:2px solid #ffc800;color:#ffc800}
+  .dot-dest{background:rgba(255,71,87,.15);border:2px solid var(--danger);color:var(--danger)}
+  .route-stop-info{flex:1}
+  .route-stop-type{font-size:10px;color:var(--text2);font-weight:600;text-transform:uppercase;letter-spacing:1px}
+  .route-stop-name{font-size:13px;color:var(--text);margin-top:2px;line-height:1.3}
+  .route-stop-km{font-size:11px;color:var(--accent);margin-top:2px;font-weight:600}
+  .stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:0 16px 14px}
+  .stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px 14px}
+  .stat-card.profit-card{grid-column:1/-1;background:linear-gradient(135deg,rgba(0,229,160,.1),rgba(123,97,255,.08));border-color:rgba(0,229,160,.5)}
+  .stat-icon{font-size:22px;margin-bottom:6px}
+  .stat-label{font-size:11px;color:var(--text2);font-weight:500;text-transform:uppercase;letter-spacing:.8px}
+  .stat-value{font-family:'Syne',sans-serif;font-size:24px;font-weight:800;color:var(--text);margin-top:4px;line-height:1}
+  .stat-value.green{color:var(--accent)}
+  .stat-value.purple{color:var(--accent2)}
+  .stat-value.red{color:var(--danger)}
+  .stat-sub{font-size:11px;color:var(--text2);margin-top:4px}
+  .profit-bar-wrap{margin:0 16px 14px}
+  .profit-bar-labels{display:flex;justify-content:space-between;margin-bottom:6px}
+  .profit-bar-label{font-size:11px;color:var(--text2)}
+  .profit-bar-bg{height:8px;background:var(--surface2);border-radius:4px;overflow:hidden;border:1px solid var(--border)}
+  .profit-bar-fill{height:100%;border-radius:4px;background:linear-gradient(90deg,var(--accent2),var(--accent));transition:width 1s cubic-bezier(.4,0,.2,1)}
+  .section-divider{display:flex;align-items:center;gap:10px;margin:0 0 14px;color:var(--text3);font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase}
+  .section-divider::before,.section-divider::after{content:'';flex:1;height:1px;background:var(--border)}
+  .settings-info{margin:0 16px 14px;background:rgba(123,97,255,.08);border:1px solid rgba(123,97,255,.3);border-radius:var(--radius);padding:14px;font-size:13px;color:var(--text2);line-height:1.6}
+  .toast{position:fixed;bottom:40px;left:50%;transform:translateX(-50%) translateY(100px);background:var(--surface2);border:1px solid var(--border);border-radius:30px;padding:12px 22px;font-size:14px;color:var(--text);z-index:9999;transition:transform .3s cubic-bezier(.4,0,.2,1);white-space:nowrap;box-shadow:0 8px 32px rgba(0,0,0,.5);max-width:90vw;text-align:center}
+  .toast.show{transform:translateX(-50%) translateY(0)}
+  .toast.success{border-color:var(--accent);color:var(--accent)}
+  .toast.error{border-color:var(--danger);color:var(--danger)}
+</style>
+</head>
+<body>
+<div class="loading-overlay" id="loadingOverlay"><div class="spinner"></div><div class="loading-text" id="loadingText">Se calculează...</div></div>
+<div class="toast" id="toast"></div>
+
+<div class="screen active" id="mainScreen">
+  <div class="header"><div class="header-title">DayTrip <span>Calc</span></div><div class="icon-btn" onclick="showScreen('settingsScreen')">⚙️</div></div>
+  <div class="card">
+    <div class="card-label">🚗 Selectează Mașina</div>
+    <div class="car-grid">
+      <div class="car-option selected" id="car-elantra" onclick="selectCar('elantra')"><div class="car-icon">🚙</div><div class="car-name">Elantra</div><div class="car-cost" id="lbl-elantra">0.35 lei/km</div><div class="car-fuel">Benzină + GPL</div></div>
+      <div class="car-option" id="car-vito" onclick="selectCar('vito')"><div class="car-icon">🚐</div><div class="car-name">Vito</div><div class="car-cost" id="lbl-vito">0.60 lei/km</div><div class="car-fuel">Diesel</div></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-label">💶 Tarif DayTrip</div>
+    <div class="input-row"><div class="input-label">Suma oferită de client</div><div class="tariff-wrap"><span class="currency">€</span><input type="number" class="input-field" id="tariff" placeholder="0" inputmode="decimal"></div></div>
+  </div>
+  <div class="card">
+    <div class="card-label">📍 Ruta</div>
+    <div class="input-row"><div class="input-label">📌 Locația ta (de unde pleci)</div><div class="location-wrap"><input type="text" class="input-field" id="myLocation" placeholder="ex: Brașov, Calea Bucureștilor" autocomplete="off" oninput="onAC('myLocation','acMyLoc')"><div class="autocomplete-list" id="acMyLoc"></div></div></div>
+    <div class="input-row"><div class="input-label">🟢 Locul de preluare client</div><div class="location-wrap"><input type="text" class="input-field" id="pickup" placeholder="ex: Aeroportul Otopeni" autocomplete="off" oninput="onAC('pickup','acPickup')"><div class="autocomplete-list" id="acPickup"></div></div></div>
+    <div class="section-divider">Opriri Client</div>
+    <div id="stopsList"></div>
+    <button class="add-stop-btn" onclick="addStop()">＋ Adaugă oprire</button>
+  </div>
+  <div class="card">
+    <div class="card-label">🏁 Destinație Finală</div>
+    <div class="location-wrap"><input type="text" class="input-field" id="destination" placeholder="ex: Cluj-Napoca, Piața Unirii" autocomplete="off" oninput="onAC('destination','acDest')"><div class="autocomplete-list" id="acDest"></div></div>
+  </div>
+  <button class="calc-btn" onclick="calculate()">🧮 Calculează Profitabilitatea</button>
+</div>
+
+<div class="screen" id="resultsScreen">
+  <div class="header"><div class="header-title">📊 <span>Rezultate</span></div><div class="icon-btn" onclick="showScreen('mainScreen')">✕</div></div>
+  <div class="route-visual" id="routeVisual"></div>
+  <div class="stats-grid" id="statsGrid"></div>
+  <div class="profit-bar-wrap" id="profitBarWrap"></div>
+  <button class="back-btn" onclick="showScreen('mainScreen')">← Calculează altă cursă</button>
+</div>
+
+<div class="screen" id="settingsScreen">
+  <div class="header"><div class="header-title">⚙️ <span>Setări</span></div><div class="icon-btn" onclick="showScreen('mainScreen')">✕</div></div>
+  <div class="settings-info">🔑 Necesită activat în Google Cloud:<br><strong>Places API · Directions API · Geocoding API</strong></div>
+  <div class="card">
+    <div class="card-label">🗝️ Google Maps API Key</div>
+    <div class="input-row"><input type="text" class="input-field" id="apiKeyInput" placeholder="AIzaSy..." autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false"></div>
+    <button style="width:100%;padding:10px;background:rgba(0,229,160,.1);border:1px solid var(--accent);border-radius:var(--radius-sm);color:var(--accent);font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer;margin-top:4px" onclick="testKey()">🔍 Testează cheia</button>
+  </div>
+  <div class="card">
+    <div class="card-label">⛽ Cost Combustibil</div>
+    <div class="input-row"><div class="input-label">Hyundai Elantra (lei/km)</div><input type="number" class="input-field" id="costElantra" placeholder="0.35" inputmode="decimal" step="0.01"></div>
+    <div class="input-row"><div class="input-label">Mercedes Vito (lei/km)</div><input type="number" class="input-field" id="costVito" placeholder="0.60" inputmode="decimal" step="0.01"></div>
+  </div>
+  <div class="card">
+    <div class="card-label">💱 Curs Valutar</div>
+    <div class="input-row"><div class="input-label">1 EUR = ? LEI</div><input type="number" class="input-field" id="eurRate" placeholder="5.1" inputmode="decimal" step="0.01"></div>
+  </div>
+  <button class="save-btn" onclick="saveSettings()">💾 Salvează Setările</button>
+</div>
+
+<script>
+let car='elantra',stops=[],stopCount=0,acT={},pIds={};
+function getS(){const s=JSON.parse(localStorage.getItem('dts')||'{}');return{key:s.key||'',ce:parseFloat(s.ce)||.35,cv:parseFloat(s.cv)||.6,er:parseFloat(s.er)||5.1}}
+function loadS(){const s=getS();document.getElementById('apiKeyInput').value=s.key;document.getElementById('costElantra').value=s.ce!==.35?s.ce:'';document.getElementById('costVito').value=s.cv!==.6?s.cv:'';document.getElementById('eurRate').value=s.er!==5.1?s.er:'';document.getElementById('lbl-elantra').textContent=s.ce+' lei/km';document.getElementById('lbl-vito').textContent=s.cv+' lei/km'}
+function saveSettings(){const s={key:document.getElementById('apiKeyInput').value.trim(),ce:parseFloat(document.getElementById('costElantra').value)||.35,cv:parseFloat(document.getElementById('costVito').value)||.6,er:parseFloat(document.getElementById('eurRate').value)||5.1};localStorage.setItem('dts',JSON.stringify(s));document.getElementById('lbl-elantra').textContent=s.ce+' lei/km';document.getElementById('lbl-vito').textContent=s.cv+' lei/km';toast('✅ Salvat!','success');setTimeout(()=>showScreen('mainScreen'),700)}
+async function testKey(){const k=document.getElementById('apiKeyInput').value.trim();if(!k){toast('❌ Introdu cheia','error');return}toast('⏳ Se testează...','');try{const r=await fetch(`https://maps.googleapis.com/maps/api/geocode/json?address=Brasov&key=${k}`),d=await r.json();d.status==='OK'?toast('✅ Cheia funcționează!','success'):toast('❌ '+(d.error_message||d.status),'error')}catch(e){toast('❌ Eroare: '+e.message,'error')}}
+function selectCar(c){car=c;document.querySelectorAll('.car-option').forEach(e=>e.classList.remove('selected'));document.getElementById('car-'+c).classList.add('selected')}
+function addStop(){stopCount++;const sid='s'+stopCount,aid='a'+stopCount;stops.push(sid);const w=document.createElement('div');w.className='stop-item';w.id='w'+sid;w.innerHTML=`<div class="location-wrap" style="flex:1"><input type="text" class="input-field" id="${sid}" placeholder="Oprire ${stopCount}" autocomplete="off" oninput="onAC('${sid}','${aid}')"><div class="autocomplete-list" id="${aid}"></div></div><div class="remove-btn" onclick="rmStop('${sid}')">×</div>`;document.getElementById('stopsList').appendChild(w)}
+function rmStop(sid){stops=stops.filter(s=>s!==sid);const w=document.getElementById('w'+sid);if(w)w.remove();delete pIds[sid]}
+function onAC(id,lid){const v=document.getElementById(id).value.trim();delete pIds[id];clearTimeout(acT[lid]);const l=document.getElementById(lid);if(!v||v.length<2){l.style.display='none';return}acT[lid]=setTimeout(()=>fetchAC(id,lid,v),350)}
+async function fetchAC(id,lid,inp){const{key}=getS();if(!key)return;try{const r=await fetch(`https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(inp)}&key=${key}&language=ro`),d=await r.json(),l=document.getElementById(lid);if(!l)return;l.innerHTML='';if(!d.predictions||!d.predictions.length){l.style.display='none';return}d.predictions.slice(0,5).forEach(p=>{const i=document.createElement('div');i.className='ac-item';const m=p.structured_formatting?.main_text||p.description,s=p.structured_formatting?.secondary_text||'';i.innerHTML=`<div class="ac-main">${m}</div>${s?`<div class="ac-sub">${s}</div>`:''}`;i.onclick=()=>{document.getElementById(id).value=p.description;pIds[id]=p.place_id;l.style.display='none'};l.appendChild(i)});l.style.display='block'}catch(e){console.error(e)}}
+document.addEventListener('click',e=>{document.querySelectorAll('.autocomplete-list').forEach(l=>{if(!l.parentElement?.contains(e.target))l.style.display='none'})});
+async function geo(addr,key){const r=await fetch(`https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(addr)}&key=${key}`),d=await r.json();if(d.status!=='OK'||!d.results[0])throw new Error('Nu am găsit: '+addr);return d.results[0].geometry.location}
+async function getLL(id,key){const addr=document.getElementById(id)?.value?.trim();if(!addr)throw new Error('Câmp gol');const pid=pIds[id];if(pid){const r=await fetch(`https://maps.googleapis.com/maps/api/geocode/json?place_id=${pid}&key=${key}`),d=await r.json();if(d.status==='OK'&&d.results[0])return d.results[0].geometry.location}return geo(addr,key)}
+async function route(o,d,wps,key){let wp='';if(wps.length)wp='&waypoints='+wps.map(w=>w.lat+','+w.lng).join('|');const r=await fetch(`https://maps.googleapis.com/maps/api/directions/json?origin=${o.lat},${o.lng}&destination=${d.lat},${d.lng}${wp}&key=${key}`),data=await r.json();if(data.status!=='OK')throw new Error('Directions: '+data.status);let km=0,min=0;data.routes[0].legs.forEach(l=>{km+=l.distance.value/1000;min+=Math.round(l.duration.value/60)});return{km,min}}
+async function calculate(){const{key,ce,cv,er}=getS();if(!key){toast('⚙️ Setează cheia API','error');showScreen('settingsScreen');return}const te=parseFloat(document.getElementById('tariff').value);if(!te||te<=0){toast('❌ Introdu tariful','error');return}if(!document.getElementById('myLocation').value.trim()){toast('❌ Introdu locația ta','error');return}if(!document.getElementById('pickup').value.trim()){toast('❌ Introdu preluarea','error');return}if(!document.getElementById('destination').value.trim()){toast('❌ Introdu destinația','error');return}
+showLoad(true,'Se geocodează...');
+try{const ml=await getLL('myLocation',key),pl=await getLL('pickup',key),dl=await getLL('destination',key),sl=[];for(const sid of stops){if(document.getElementById(sid)?.value?.trim())sl.push(await getLL(sid,key))}
+setLT('Se calculează traseul...');
+const s1=await route(ml,pl,[],key),s2=await route(pl,dl,sl,key),s3=await route(dl,ml,[],key);
+const tk=s1.km+s2.km+s3.km,tm=s1.min+s2.min+s3.min,cpk=car==='elantra'?ce:cv,fc=tk*cpk,tl=te*er,pr=tl-fc,ppk=pr/tk,pp=Math.max(0,Math.min(100,(pr/tl)*100)),h=Math.floor(tm/60),m=tm%60,ts=h>0?`${h}h ${m}m`:`${m}m`;
+showLoad(false);
+renderR({ml:document.getElementById('myLocation').value.split(',')[0],pl:document.getElementById('pickup').value.split(',')[0],dl:document.getElementById('destination').value.split(',')[0],sl:stops.map(sid=>(document.getElementById(sid)?.value||'').split(',')[0]).filter(Boolean),s1,s2,s3,tk,tm,ts,fc,te,tl,pr,ppk,pp,cpk})}catch(e){showLoad(false);console.error(e);toast('❌ '+(e.message||'Eroare'),'error')}}
+function ft(min){const h=Math.floor(min/60),m=min%60;return h>0?`${h}h ${m}m`:`${m}m`}
+function renderR(d){let h=`<div class="route-stop"><div class="route-dot dot-home">🏠</div><div class="route-stop-info"><div class="route-stop-type">Locația ta</div><div class="route-stop-name">${d.ml}</div><div class="route-stop-km">→ ${d.s1.km.toFixed(1)} km · ${ft(d.s1.min)}</div></div></div><div class="route-stop"><div class="route-dot dot-pickup">P</div><div class="route-stop-info"><div class="route-stop-type">Preluare client</div><div class="route-stop-name">${d.pl}</div><div class="route-stop-km">→ ${d.s2.km.toFixed(1)} km · ${ft(d.s2.min)}</div></div></div>`;d.sl.forEach((s,i)=>{h+=`<div class="route-stop"><div class="route-dot dot-stop">${i+1}</div><div class="route-stop-info"><div class="route-stop-type">Oprire ${i+1}</div><div class="route-stop-name">${s}</div></div></div>`});h+=`<div class="route-stop"><div class="route-dot dot-dest">🏁</div><div class="route-stop-info"><div class="route-stop-type">Destinație finală</div><div class="route-stop-name">${d.dl}</div><div class="route-stop-km">↩ ${d.s3.km.toFixed(1)} km acasă · ${ft(d.s3.min)}</div></div></div>`;document.getElementById('routeVisual').innerHTML=h;
+const pc=d.pr>=0?'green':'red',cn=car==='elantra'?'Elantra':'Vito';
+document.getElementById('statsGrid').innerHTML=`<div class="stat-card"><div class="stat-icon">📏</div><div class="stat-label">Total KM</div><div class="stat-value">${d.tk.toFixed(0)}</div><div class="stat-sub">km parcurși total</div></div><div class="stat-card"><div class="stat-icon">⏱️</div><div class="stat-label">Timp Total</div><div class="stat-value purple">${d.ts}</div><div class="stat-sub">condiții optime</div></div><div class="stat-card"><div class="stat-icon">⛽</div><div class="stat-label">Cost Combustibil</div><div class="stat-value red">${d.fc.toFixed(0)}</div><div class="stat-sub">lei · ${d.cpk} lei/km · ${cn}</div></div><div class="stat-card"><div class="stat-icon">💶</div><div class="stat-label">Tarif Client</div><div class="stat-value">${d.te}</div><div class="stat-sub">€ = ${d.tl.toFixed(0)} lei</div></div><div class="stat-card profit-card"><div class="stat-icon">💰</div><div class="stat-label">Profit Net</div><div class="stat-value ${pc}" style="font-size:32px">${d.pr>=0?'+':''}${d.pr.toFixed(0)} lei</div><div class="stat-sub">${d.ppk.toFixed(2)} lei/km · ${d.pp.toFixed(0)}% din tarif</div></div>`;
+document.getElementById('profitBarWrap').innerHTML=`<div class="profit-bar-labels"><span class="profit-bar-label">🔴 Combustibil ${d.fc.toFixed(0)} lei</span><span class="profit-bar-label">🟢 Profit ${d.pr.toFixed(0)} lei</span></div><div class="profit-bar-bg"><div class="profit-bar-fill" id="pfill" style="width:0%"></div></div>`;
+showScreen('resultsScreen');requestAnimationFrame(()=>setTimeout(()=>{const f=document.getElementById('pfill');if(f)f.style.width=d.pp.toFixed(0)+'%'},200))}
+function showScreen(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');window.scrollTo(0,0)}
+function showLoad(v,t){document.getElementById('loadingOverlay').classList.toggle('active',v);if(t)document.getElementById('loadingText').textContent=t}
+function setLT(t){document.getElementById('loadingText').textContent=t}
+let tt;function toast(msg,type){const t=document.getElementById('toast');t.textContent=msg;t.className=`toast ${type||''} show`;clearTimeout(tt);tt=setTimeout(()=>t.classList.remove('show'),3500)}
+loadS();
+</script>
+</body>
+</html>
