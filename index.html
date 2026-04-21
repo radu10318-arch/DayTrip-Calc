@@ -163,27 +163,25 @@ function loadS(){const s=getS();document.getElementById('apiKeyInput').value=s.k
 function saveSettings(){const s={key:document.getElementById('apiKeyInput').value.trim(),ce:parseFloat(document.getElementById('costElantra').value)||.35,cv:parseFloat(document.getElementById('costVito').value)||.6,er:parseFloat(document.getElementById('eurRate').value)||5.1};localStorage.setItem('dts',JSON.stringify(s));document.getElementById('lbl-elantra').textContent=s.ce+' lei/km';document.getElementById('lbl-vito').textContent=s.cv+' lei/km';if(s.key)loadMaps(s.key);toast('✅ Salvat!','success');setTimeout(()=>showScreen('mainScreen'),700)}
 
 function loadMaps(key){
-  if(window.google&&window.google.maps){mapsReady=true;return}
-  const old=document.getElementById('gmaps');if(old)old.remove();
+  if(window.google&&window.google.maps&&window.google.maps.Geocoder){mapsReady=true;return}
+  const old=document.getElementById('gmaps');if(old){old.remove();window.google=undefined}
+  mapsReady=false;
   const s=document.createElement('script');
   s.id='gmaps';
-  s.src=`https://maps.googleapis.com/maps/api/js?key=${key}&libraries=places,geometry&callback=onMapsReady`;
-  s.async=true;s.defer=true;
-  s.onerror=()=>toast('❌ Cheie API invalidă','error');
+  s.src=`https://maps.googleapis.com/maps/api/js?key=${key}&libraries=places&callback=onMapsReady&loading=async`;
+  s.async=true;
+  s.onerror=()=>{mapsReady=false;toast('❌ Cheie API invalidă','error')};
   document.head.appendChild(s);
 }
 
-window.onMapsReady=function(){mapsReady=true;}
+window.onMapsReady=function(){mapsReady=true;toast('✅ Maps gata!','success')}
 
-async function testKey(){
+function testKey(){
   const k=document.getElementById('apiKeyInput').value.trim();
   if(!k){toast('❌ Introdu cheia','error');return}
-  toast('⏳ Se testează...','');
+  mapsReady=false;
   loadMaps(k);
-  setTimeout(()=>{
-    if(mapsReady)toast('✅ Cheia funcționează!','success');
-    else toast('❌ Cheie invalidă sau APIs neactivate','error');
-  },3000);
+  toast('⏳ Se încarcă Maps...','');
 }
 
 function selectCar(c){car=c;document.querySelectorAll('.car-option').forEach(e=>e.classList.remove('selected'));document.getElementById('car-'+c).classList.add('selected')}
@@ -192,7 +190,7 @@ function addStop(){stopCount++;const sid='s'+stopCount,aid='a'+stopCount;stops.p
 function rmStop(sid){stops=stops.filter(s=>s!==sid);const w=document.getElementById('w'+sid);if(w)w.remove();delete pIds[sid]}
 
 let acSvc=null;
-function getAcSvc(){if(!acSvc&&window.google)acSvc=new google.maps.places.AutocompleteService();return acSvc}
+function getAcSvc(){if(!acSvc&&window.google&&window.google.maps)acSvc=new google.maps.places.AutocompleteService();return acSvc}
 
 function onAC(id,lid){const v=document.getElementById(id).value.trim();delete pIds[id];clearTimeout(acT[lid]);const l=document.getElementById(lid);if(!v||v.length<2){l.style.display='none';return}acT[lid]=setTimeout(()=>doAC(id,lid,v),350)}
 
@@ -213,32 +211,39 @@ function doAC(id,lid,inp){
 
 document.addEventListener('click',e=>{document.querySelectorAll('.autocomplete-list').forEach(l=>{if(!l.parentElement?.contains(e.target))l.style.display='none'})});
 
-let geocoder=null,dirSvc=null;
-function getGeocoder(){if(!geocoder&&window.google)geocoder=new google.maps.Geocoder();return geocoder}
-function getDirSvc(){if(!dirSvc&&window.google)dirSvc=new google.maps.DirectionsService();return dirSvc}
+function withTimeout(promise,ms,msg){
+  return Promise.race([promise,new Promise((_,rej)=>setTimeout(()=>rej(new Error(msg||'Timeout')),ms))]);
+}
 
 function getLL(inputId){
   return new Promise((res,rej)=>{
     const addr=document.getElementById(inputId)?.value?.trim();
     if(!addr)return rej(new Error('Câmp gol'));
+    if(!window.google||!window.google.maps)return rej(new Error('Maps nu e gata. Salvează setările și încearcă din nou.'));
+    const gc=new google.maps.Geocoder();
     const pid=pIds[inputId];
-    const gc=getGeocoder();if(!gc)return rej(new Error('Maps nu e inițializat'));
-    const req=pid?{placeId:pid}:{address:addr};
+    const req=pid?{placeId:pid,region:'ro'}:{address:addr,region:'ro',componentRestrictions:{country:'ro'}};
+    const t=setTimeout(()=>rej(new Error('Timeout geocodare: '+addr)),8000);
     gc.geocode(req,(results,status)=>{
+      clearTimeout(t);
       if(status==='OK'&&results[0])res(results[0].geometry.location);
-      else rej(new Error('Nu am găsit: '+addr));
+      else rej(new Error('Nu am găsit: '+addr+' ('+status+')'));
     });
   });
 }
 
 function getRoute(orig,dest,wps){
   return new Promise((res,rej)=>{
-    const svc=getDirSvc();if(!svc)return rej(new Error('Maps nu e inițializat'));
+    if(!window.google||!window.google.maps)return rej(new Error('Maps nu e gata'));
+    const svc=new google.maps.DirectionsService();
+    const t=setTimeout(()=>rej(new Error('Timeout directions')),10000);
     svc.route({
       origin:orig,destination:dest,
       waypoints:wps.map(w=>({location:w,stopover:true})),
-      travelMode:google.maps.TravelMode.DRIVING
+      travelMode:google.maps.TravelMode.DRIVING,
+      region:'ro'
     },(result,status)=>{
+      clearTimeout(t);
       if(status!=='OK')return rej(new Error('Directions: '+status));
       let km=0,min=0;
       result.routes[0].legs.forEach(l=>{km+=l.distance.value/1000;min+=Math.round(l.duration.value/60)});
@@ -250,7 +255,7 @@ function getRoute(orig,dest,wps){
 async function calculate(){
   const{key,ce,cv,er}=getS();
   if(!key){toast('⚙️ Setează cheia API','error');showScreen('settingsScreen');return}
-  if(!mapsReady){toast('⏳ Maps se încarcă, încearcă din nou','error');return}
+  if(!mapsReady){toast('⏳ Apasă Testează cheia în Setări mai întâi','error');return}
   const te=parseFloat(document.getElementById('tariff').value);
   if(!te||te<=0){toast('❌ Introdu tariful','error');return}
   if(!document.getElementById('myLocation').value.trim()){toast('❌ Introdu locația ta','error');return}
@@ -258,10 +263,17 @@ async function calculate(){
   if(!document.getElementById('destination').value.trim()){toast('❌ Introdu destinația','error');return}
   showLoad(true,'Se geocodează...');
   try{
-    const ml=await getLL('myLocation'),pl=await getLL('pickup'),dl=await getLL('destination'),sl=[];
-    for(const sid of stops){if(document.getElementById(sid)?.value?.trim())sl.push(await getLL(sid))}
+    const ml=await getLL('myLocation');
+    setLT('Se geocodează preluarea...');
+    const pl=await getLL('pickup');
+    setLT('Se geocodează destinația...');
+    const dl=await getLL('destination');
+    const sl=[];
+    for(const sid of stops){if(document.getElementById(sid)?.value?.trim()){setLT('Se geocodează oprirea...');sl.push(await getLL(sid))}}
     setLT('Se calculează traseul...');
-    const s1=await getRoute(ml,pl,[]),s2=await getRoute(pl,dl,sl),s3=await getRoute(dl,ml,[]);
+    const s1=await getRoute(ml,pl,[]);
+    const s2=await getRoute(pl,dl,sl);
+    const s3=await getRoute(dl,ml,[]);
     const tk=s1.km+s2.km+s3.km,tm=s1.min+s2.min+s3.min,cpk=car==='elantra'?ce:cv,fc=tk*cpk,tl=te*er,pr=tl-fc,ppk=pr/tk,pp=Math.max(0,Math.min(100,(pr/tl)*100)),h=Math.floor(tm/60),m=tm%60,ts=h>0?`${h}h ${m}m`:`${m}m`;
     showLoad(false);
     renderR({ml:document.getElementById('myLocation').value.split(',')[0],pl:document.getElementById('pickup').value.split(',')[0],dl:document.getElementById('destination').value.split(',')[0],sl:stops.map(sid=>(document.getElementById(sid)?.value||'').split(',')[0]).filter(Boolean),s1,s2,s3,tk,tm,ts,fc,te,tl,pr,ppk,pp,cpk});
